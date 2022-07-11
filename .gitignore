@@ -1,0 +1,8 @@
+docs/results.txt
+
+# Apple stuff
+.DS_Store
+
+# IDE
+.idea
+
