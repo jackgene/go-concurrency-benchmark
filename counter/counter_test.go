@@ -2,7 +2,7 @@ package counter
 
 import "testing"
 
-func benchmarkCounter(counter Counter, count int, concurrency int) {
+func incrementCounter(counter Counter, count int, concurrency int) {
 	done := make(chan struct{}, concurrency)
 	for i := 0; i < concurrency; i++ {
 		go func() {
@@ -18,20 +18,115 @@ func benchmarkCounter(counter Counter, count int, concurrency int) {
 	}
 }
 
-func BenchmarkActorCounter(b *testing.B) {
-	counter := NewActorCounter()
+func TestCounter(t *testing.T) {
+	t.Run("Serially increment ActorCounter", func(t *testing.T) {
+		// Set up
+		counter := NewActorCounter()
 
-	benchmarkCounter(counter, b.N, 10)
+		// Test
+		incrementCounter(counter, 100_000, 1)
+
+		// Verify
+		var want uint = 100_000
+		got := counter.Get()
+		if want != got {
+			t.Errorf("wanted %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Serially increment MutexCounter", func(t *testing.T) {
+		// Set up
+		counter := NewMutexCounter()
+
+		// Test
+		incrementCounter(counter, 100_000, 1)
+
+		// Verify
+		var want uint = 100_000
+		got := counter.Get()
+		if want != got {
+			t.Errorf("wanted %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Serially increment UnsafeCounter", func(t *testing.T) {
+		// Set up
+		counter := NewUnsafeCounter()
+
+		// Test
+		incrementCounter(counter, 100_000, 1)
+
+		// Verify
+		var want uint = 100_000
+		got := counter.Get()
+		if want != got {
+			t.Errorf("wanted %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Concurrently increment ActorCounter", func(t *testing.T) {
+		// Set up
+		counter := NewActorCounter()
+
+		// Test
+		incrementCounter(counter, 100_000, 2)
+
+		// Verify
+		var want uint = 200_000
+		got := counter.Get()
+		if want != got {
+			t.Errorf("wanted %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Concurrently increment MutexCounter", func(t *testing.T) {
+		// Set up
+		counter := NewMutexCounter()
+
+		// Test
+		incrementCounter(counter, 100_000, 2)
+
+		// Verify
+		var want uint = 200_000
+		got := counter.Get()
+		if want != got {
+			t.Errorf("wanted %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Concurrently increment UnsafeCounter", func(t *testing.T) {
+		// Set up
+		counter := NewUnsafeCounter()
+
+		// Test
+		incrementCounter(counter, 100_000, 2)
+
+		// Verify
+		// This one is expected to fail
+		//var want uint = 200_000
+		//got := counter.Get()
+		//if want != got {
+		//	t.Errorf("wanted %d, got %d", want, got)
+		//}
+	})
 }
 
-func BenchmarkMutexCounter(b *testing.B) {
-	counter := NewMutexCounter()
+func BenchmarkCounter(b *testing.B) {
+	b.Run("Benchmark ActorCounter", func(b *testing.B) {
+		counter := NewActorCounter()
 
-	benchmarkCounter(counter, b.N, 10)
-}
+		incrementCounter(counter, b.N, 10)
+	})
 
-func BenchmarkUnsafeCounter(b *testing.B) {
-	counter := NewUnsafeCounter()
+	b.Run("Benchmark MutexCounter", func(b *testing.B) {
+		counter := NewMutexCounter()
 
-	benchmarkCounter(counter, b.N, 10)
+		incrementCounter(counter, b.N, 10)
+	})
+
+	b.Run("Benchmark UnsafeCounter", func(b *testing.B) {
+		counter := NewUnsafeCounter()
+
+		incrementCounter(counter, b.N, 10)
+	})
 }
