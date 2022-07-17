@@ -1,4 +1,4 @@
-module go-concurrency-performance
+module go-concurrency-benchmark
 
 go 1.18
 
