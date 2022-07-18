@@ -4,9 +4,16 @@ import "testing"
 
 func incrementCounter(counter Counter, count int, concurrency int) {
 	done := make(chan struct{}, concurrency)
+	countPerThread := count / concurrency
+	countDiscrepancy := count % concurrency // These would be missing due to int division
 	for i := 0; i < concurrency; i++ {
+		countForThread := countPerThread
+		if i < countDiscrepancy {
+			countForThread += 1
+		}
+
 		go func() {
-			for c := 0; c < count; c++ {
+			for c := 0; c < countForThread; c++ {
 				counter.Increment()
 			}
 			done <- struct{}{}
